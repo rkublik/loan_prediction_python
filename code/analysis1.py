@@ -9,6 +9,13 @@ Script for data munging, load data, fill in missing values, format for analysis
 
 import pandas as pd
 import numpy as np
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+libdir = os.path.join(parentdir,"ml_library")
+sys.path.insert(0,libdir) 
+from logistic_regression import logistic_regression
+
 
 def data_munging():
     ''' perform initial data munging tasks'''
@@ -44,8 +51,26 @@ def data_munging():
 
 # Now run logistic regression, calculate performance metrics
     
-def calc_learning_curve():
-    pass
+def calc_learning_curve(features, target, train_ratio):
+    ''' calculate learning curve for provided training set '''
+    m,n = features.shape
+    num_train = int(m * train_ratio)
+    train_idx = np.random.randint(0, m, num_train)
+    train_features = features[train_idx,:]
+    train_target = target[train_idx,:]
+    
+    cv_features = features[~train_idx,:]
+    cv_target = target[~train_idx,:]
+    
+    # run loop with different sized training examples
+    train_err = np.zeros(num_train)
+    test_err = np.zeros(num_train)
+    train_size = np.array(range(1,num_train+1))
+    lr = logistic_regression()
+    for i in range(num_train):
+        lr.train(train_features[1:i,:], train_target[:,i,:])
+    
+    
 
 
 # look at learning curve...
