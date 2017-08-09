@@ -9,6 +9,10 @@ Script for data munging, load data, fill in missing values, format for analysis
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+
+
+
 import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -55,7 +59,7 @@ def calc_learning_curve(features, target, train_ratio):
     ''' calculate learning curve for provided training set '''
     m,n = features.shape
     num_train = int(m * train_ratio)
-    train_idx = np.random.randint(0, m, num_train)
+    train_idx = np.random.choice(range(m), size = num_train, replace = False)
     train_features = features[train_idx,:]
     train_target = target[train_idx,:]
     
@@ -64,11 +68,30 @@ def calc_learning_curve(features, target, train_ratio):
     
     # run loop with different sized training examples
     train_err = np.zeros(num_train)
-    test_err = np.zeros(num_train)
+    cv_err = np.zeros(num_train)
     train_size = np.array(range(1,num_train+1))
     lr = logistic_regression()
-    for i in range(num_train):
-        lr.train(train_features[1:i,:], train_target[:,i,:])
+    for i in range(1,num_train+1):
+        lr.train(train_features[:i,:], train_target[:i,:])
+        train_class, _ = lr.predict(train_features[:i,:])
+        train_err[i-1] = 1 - np.mean(train_class == train_target[:i,:])
+        
+        cv_class,_ = lr.predict(cv_features)
+        cv_err[i-1] = 1- np.mean(cv_class == cv_target)
+        
+    plt.plot(train_size, train_err, train_size, cv_err)
+    
+    
+def get_features_target(df):
+    features = np.array(df.drop(['Loan_ID', "Loan_Status"], axis = 1))
+    target = np.array(df.Loan_Status == "Y").astype(int)
+    target = target.reshape((target.shape[0],1))
+    return features, target    
+
+if __name__=="__main__":
+    train = data_munging()
+    X,y = get_features_target(train)
+    calc_learning_curve(X, y, 0.7)
     
     
 
